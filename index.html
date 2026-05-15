@@ -17,7 +17,6 @@
       flex-direction: column;
     }
 
-    /* Tab bar */
     .tab-bar {
       background: #2d3748;
       display: flex;
@@ -40,31 +39,17 @@
     }
 
     .tab-btn:hover { color: #e2e8f0; }
+    .tab-btn.active { color: #fff; border-bottom-color: #4299e1; }
 
-    .tab-btn.active {
-      color: #fff;
-      border-bottom-color: #4299e1;
-    }
+    .tab-panel { display: none; flex: 1; }
+    .tab-panel.active { display: flex; flex-direction: column; }
 
-    /* Tab panels */
-    .tab-panel {
-      display: none;
-      flex: 1;
-    }
-
-    .tab-panel.active {
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Unsubscribe tool panel — scrollable */
     #panel-unsub {
       align-items: center;
       padding: 40px 20px;
       overflow-y: auto;
     }
 
-    /* Image splitter panel */
     #panel-splitter {
       align-items: center;
       padding: 40px 20px;
@@ -90,6 +75,374 @@
       transition: background 0.2s;
     }
     #panel-splitter button:hover { background: #2b6cb0; }
+
+    /* ── Colour Swapper ── */
+    #panel-colour {
+      align-items: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    #panel-colour h1 { font-size: 1.8rem; margin-bottom: 8px; color: #2d3748; }
+    #panel-colour p.subtitle {
+      color: #718096;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .colour-grid {
+      display: flex;
+      gap: 24px;
+      width: 100%;
+      max-width: 1100px;
+      flex-wrap: wrap;
+    }
+
+    .colour-col {
+      flex: 1;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .colour-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 24px;
+    }
+
+    .colour-card label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #4a5568;
+      font-size: 0.92rem;
+    }
+
+    .colour-card textarea {
+      width: 100%;
+      height: 220px;
+      padding: 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      resize: vertical;
+      outline: none;
+      background: #fafafa;
+      transition: border-color 0.2s;
+    }
+
+    .colour-card textarea:focus { border-color: #4299e1; background: #fff; }
+
+    .colour-upload-zone {
+      border: 2px dashed #bee3f8;
+      border-radius: 10px;
+      background: #ebf8ff;
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .colour-upload-zone:hover,
+    .colour-upload-zone.dragover { border-color: #3182ce; background: #dbeafe; }
+
+    .colour-upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .colour-upload-zone p { color: #2b6cb0; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+    .colour-upload-zone span { color: #718096; font-size: 0.8rem; }
+
+    #ref-image-preview {
+      display: none;
+      margin-top: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      position: relative;
+    }
+
+    #ref-image-preview img { width: 100%; display: block; cursor: crosshair; }
+
+    #ref-image-preview .clear-img-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.55);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    #extracted-palette { display: none; margin-top: 16px; }
+    #extracted-palette p { font-size: 0.82rem; color: #718096; margin-bottom: 8px; font-weight: 600; }
+
+    .palette-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      position: relative;
+    }
+
+    .swatch:hover { transform: scale(1.15); }
+    .swatch.selected { border-color: #2d3748; transform: scale(1.15); }
+
+    .swatch .swatch-hex {
+      display: none;
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      color: #4a5568;
+      white-space: nowrap;
+      font-family: monospace;
+    }
+
+    .swatch:hover .swatch-hex { display: block; }
+
+    #picked-colour-indicator {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #4a5568;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #picked-colour-indicator .picked-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    #colour-mapping { display: none; margin-top: 20px; }
+    #colour-mapping p.map-title { font-weight: 700; color: #2d3748; font-size: 0.92rem; margin-bottom: 12px; }
+
+    .map-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .map-row .orig-swatch {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+      border: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .map-row .orig-hex {
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #4a5568;
+      min-width: 70px;
+    }
+
+    .map-row .arrow { color: #a0aec0; font-size: 1rem; }
+
+    .map-row .new-swatch {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+      border: 2px solid #bee3f8;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .map-row .new-swatch:hover { border-color: #3182ce; }
+
+    .map-row .new-hex-input {
+      font-family: monospace;
+      font-size: 0.82rem;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      width: 88px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .map-row .new-hex-input:focus { border-color: #4299e1; }
+
+    .overrides-section {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .overrides-section p.overrides-title {
+      font-weight: 700;
+      color: #2d3748;
+      font-size: 0.92rem;
+      margin-bottom: 14px;
+    }
+
+    .override-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .override-row label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      min-width: 180px;
+      margin-bottom: 0;
+    }
+
+    .override-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .override-toggle input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #3182ce;
+    }
+
+    .override-toggle span { font-size: 0.82rem; color: #718096; }
+
+    .override-colour-pick { display: flex; align-items: center; gap: 8px; }
+
+    .override-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      border: 2px solid #bee3f8;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+
+    .override-swatch:hover { border-color: #3182ce; }
+
+    .override-hex-input {
+      font-family: monospace;
+      font-size: 0.82rem;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      width: 88px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .override-hex-input:focus { border-color: #4299e1; }
+
+    .override-hex-input:disabled,
+    .override-swatch.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .override-note { font-size: 0.75rem; color: #a0aec0; font-style: italic; }
+
+    .btn-apply-colour {
+      margin-top: 24px;
+      padding: 12px 28px;
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .btn-apply-colour:hover { background: #2b6cb0; }
+
+    #colour-error-msg {
+      margin-top: 12px;
+      color: #e53e3e;
+      font-size: 0.9rem;
+      display: none;
+      padding: 10px 14px;
+      background: #fff5f5;
+      border: 1px solid #fed7d7;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    #colour-result {
+      display: none;
+      margin-top: 28px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    #colour-result h2 { font-size: 1.1rem; color: #2d3748; margin-bottom: 12px; }
+
+    #colour-result pre {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .btn-download-colour {
+      margin-top: 14px;
+      padding: 10px 24px;
+      background: #38a169;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-download-colour:hover { background: #2f855a; }
 
     /* ── Unsubscribe tool styles ── */
     h1 { font-size: 1.8rem; margin-bottom: 8px; color: #2d3748; }
@@ -382,17 +735,16 @@
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('unsub', this)">Unsubscribe Link Generator</button>
     <button class="tab-btn" onclick="switchTab('splitter', this)">Image Splitter</button>
+    <button class="tab-btn" onclick="switchTab('colour', this)">Colour Swapper</button>
   </div>
 
   <!-- Unsubscribe tool panel -->
   <div class="tab-panel active" id="panel-unsub">
-
     <h1>Unsubscribe Link Generator</h1>
     <p class="subtitle">
       Upload or paste your HTML template. Only the unsubscribe link's href is replaced —
       all other links, colours, styles, and attributes are completely untouched.
     </p>
-
     <div class="card">
       <div class="filename-row">
         <div>
@@ -400,7 +752,6 @@
           <input type="text" id="filename-input" placeholder="e.g. newsletter_may2026" />
         </div>
       </div>
-
       <div class="upload-section">
         <label>Upload HTML File</label>
         <div class="upload-drop-zone" id="drop-zone">
@@ -413,31 +764,25 @@
           <button class="clear-btn" onclick="clearFile()">Clear</button>
         </div>
       </div>
-
       <div class="divider">OR paste HTML manually</div>
-
       <div>
         <label for="html-input">HTML Template</label>
         <textarea id="html-input" placeholder="Paste your full HTML here..."></textarea>
         <p class="textarea-hint">Uploading a file will populate this field automatically — you can still edit before generating.</p>
       </div>
-
       <div id="match-preview">
         <strong>Detected unsubscribe link href:</strong>
         <code id="match-href"></code>
         <div class="full-tag" id="match-full-tag"></div>
       </div>
-
       <button class="btn-generate" onclick="generate()">Generate Versions</button>
       <div id="error-msg"></div>
     </div>
-
     <div id="results">
       <h2>Generated Files</h2>
       <button class="btn-download-all" onclick="downloadAll()">Download All 6 Files</button>
       <div id="results-list"></div>
     </div>
-
   </div>
 
   <!-- Image Splitter panel -->
@@ -458,16 +803,136 @@
     <p style="margin-top: 24px; font-size: 0.75rem; color: #a0aec0;">Credits: <a href="https://github.com/arcenter" target="_blank" rel="noopener" style="color: #a0aec0; text-decoration: underline;">arcenter</a> on GitHub</p>
   </div>
 
+  <!-- Colour Swapper panel -->
+  <div class="tab-panel" id="panel-colour">
+    <h1>Colour Swapper</h1>
+    <p class="subtitle">
+      Upload or paste your HTML, pick colours from a reference image, remap hex colours,
+      and optionally override text-in-shape and page background colours independently.
+    </p>
+
+    <div class="colour-grid">
+
+      <!-- Left col: HTML input + mapping -->
+      <div class="colour-col">
+        <div class="colour-card">
+          <label>Upload HTML File</label>
+          <div class="colour-upload-zone" id="colour-html-drop">
+            <input type="file" id="colour-html-file" accept=".html,.htm" />
+            <p>Click to browse or drag & drop</p>
+            <span>Accepts .html and .htm files</span>
+          </div>
+          <div class="upload-status" id="colour-html-status">
+            <span>Loaded: <strong id="colour-html-filename"></strong></span>
+            <button class="clear-btn" onclick="clearColourHtml()">Clear</button>
+          </div>
+        </div>
+        <div class="colour-card">
+          <label for="colour-html-input">Or Paste HTML</label>
+          <textarea id="colour-html-input" placeholder="Paste your HTML here..."></textarea>
+          <p class="textarea-hint">Uploading a file populates this field automatically.</p>
+        </div>
+
+        <!-- Colour mapping card -->
+        <div class="colour-card" id="colour-mapping" style="display:none;">
+          <p class="map-title">Hex Colour Mapping — click a target swatch or type a hex to remap</p>
+          <div id="map-rows"></div>
+
+          <!-- Special overrides -->
+          <div class="overrides-section">
+            <p class="overrides-title">Special Overrides</p>
+
+            <!-- Text in shape override -->
+            <div class="override-row">
+              <label class="override-toggle">
+                <input type="checkbox" id="override-shape-text-enabled" onchange="toggleOverride('shape-text')" />
+                <span>Set text colour inside shapes</span>
+              </label>
+              <div class="override-colour-pick">
+                <div class="override-swatch disabled" id="override-shape-text-swatch"
+                     style="background:#ffffff;"
+                     onclick="activateOverridePick('shape-text')"
+                     title="Click to pick from image/palette"></div>
+                <input class="override-hex-input" id="override-shape-text-hex"
+                       type="text" value="#ffffff" maxlength="7" placeholder="#rrggbb"
+                       disabled oninput="syncOverrideSwatch('shape-text')" />
+              </div>
+              <span class="override-note">Sets colour on all text inside coloured background containers and their descendants</span>
+            </div>
+
+            <!-- Page background override -->
+            <div class="override-row">
+              <label class="override-toggle">
+                <input type="checkbox" id="override-bg-enabled" onchange="toggleOverride('bg')" />
+                <span>Set page background colour</span>
+              </label>
+              <div class="override-colour-pick">
+                <div class="override-swatch disabled" id="override-bg-swatch"
+                     style="background:#ffffff;"
+                     onclick="activateOverridePick('bg')"
+                     title="Click to pick from image/palette"></div>
+                <input class="override-hex-input" id="override-bg-hex"
+                       type="text" value="#ffffff" maxlength="7" placeholder="#rrggbb"
+                       disabled oninput="syncOverrideSwatch('bg')" />
+              </div>
+              <span class="override-note">Replaces the outermost background-color in the HTML</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Right col: Reference image + palette -->
+      <div class="colour-col">
+        <div class="colour-card">
+          <label>Upload Reference Image</label>
+          <div class="colour-upload-zone" id="colour-img-drop">
+            <input type="file" id="colour-img-file" accept="image/*" />
+            <p>Click to browse or drag & drop</p>
+            <span>Click the image to pick a colour</span>
+          </div>
+          <div id="ref-image-preview">
+            <img id="ref-img" src="" alt="Reference" />
+            <button class="clear-img-btn" onclick="clearRefImage()">✕ Clear</button>
+          </div>
+          <div id="picked-colour-indicator" style="display:none;">
+            <div class="picked-swatch" id="picked-swatch"></div>
+            <span id="picked-hex-label"></span>
+            <span style="color:#a0aec0;font-size:0.78rem;">— click a mapping swatch to assign</span>
+          </div>
+          <div id="extracted-palette">
+            <p>Extracted palette — click a swatch to pick it, then click a mapping target:</p>
+            <div class="palette-swatches" id="palette-swatches"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="btn-apply-colour" onclick="applyColourSwap()">Apply Colour Swap</button>
+    <div id="colour-error-msg"></div>
+
+    <div id="colour-result">
+      <h2>Result</h2>
+      <pre id="colour-result-pre"></pre>
+      <button class="btn-download-colour" onclick="downloadColourResult()">Download HTML</button>
+    </div>
+  </div>
+
   <script>
-    /* ── Tab switching ── */
+    /* ════════════════════════════════════════
+       TAB SWITCHING
+    ════════════════════════════════════════ */
     function switchTab(name, btn) {
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById("panel-" + name).classList.add("active");
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
     }
 
-    /* ── Image Splitter logic ── */
+    /* ════════════════════════════════════════
+       IMAGE SPLITTER
+    ════════════════════════════════════════ */
     const canvas = document.getElementById('splitter-canvas');
     const ctx = canvas.getContext('2d');
     const upload = document.getElementById('splitter-upload');
@@ -504,31 +969,21 @@
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 2;
       horizontalSplits.forEach(y => {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
       });
       const yLines = [0, ...horizontalSplits, canvas.height];
       for (let i = 0; i < yLines.length - 1; i++) {
-        const top = yLines[i];
-        const bottom = yLines[i + 1];
+        const top = yLines[i], bottom = yLines[i + 1];
         const key = `${top}_${bottom}`;
-        const xLines = verticalSplitsByZone[key] || [];
-        xLines.forEach(x => {
-          ctx.beginPath();
-          ctx.moveTo(x, top);
-          ctx.lineTo(x, bottom);
-          ctx.stroke();
+        (verticalSplitsByZone[key] || []).forEach(x => {
+          ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
         });
       }
     }
 
     canvas.addEventListener('click', e => {
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
       if (mode === 'H') {
         horizontalSplits.push(y);
         horizontalSplits.sort((a, b) => a - b);
@@ -541,7 +996,7 @@
             verticalSplitsByZone[key] = verticalSplitsByZone[key] || [];
             verticalSplitsByZone[key].push(x);
             verticalSplitsByZone[key].sort((a, b) => a - b);
-            splitHistory.push({ type: 'vertical', value: x, key: key });
+            splitHistory.push({ type: 'vertical', value: x, key });
             break;
           }
         }
@@ -552,66 +1007,49 @@
     document.addEventListener('keydown', e => {
       if (e.key.toUpperCase() === 'H') mode = 'H';
       if (e.key.toUpperCase() === 'V') mode = 'V';
-
       if (e.ctrlKey && e.key === 'z') {
         const last = splitHistory.pop();
         if (!last) return;
-
         if (last.type === 'horizontal') {
-          const index = horizontalSplits.indexOf(last.value);
-          if (index !== -1) horizontalSplits.splice(index, 1);
-        } else if (last.type === 'vertical') {
+          const idx = horizontalSplits.indexOf(last.value);
+          if (idx !== -1) horizontalSplits.splice(idx, 1);
+        } else {
           const arr = verticalSplitsByZone[last.key];
           if (arr) {
-            const index = arr.indexOf(last.value);
-            if (index !== -1) arr.splice(index, 1);
+            const idx = arr.indexOf(last.value);
+            if (idx !== -1) arr.splice(idx, 1);
             if (arr.length === 0) delete verticalSplitsByZone[last.key];
           }
         }
-
         drawImage();
         updateAllProportions();
       }
     });
 
     function cropImageToDataURL(sx, sy, sw, sh) {
-      const tmpCanvas = document.createElement('canvas');
-      tmpCanvas.width = sw;
-      tmpCanvas.height = sh;
-      const tmpCtx = tmpCanvas.getContext('2d');
-      tmpCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-      return tmpCanvas.toDataURL('image/png');
+      const tmp = document.createElement('canvas');
+      tmp.width = sw; tmp.height = sh;
+      tmp.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+      return tmp.toDataURL('image/png');
     }
 
     downloadZipBtn.addEventListener('click', () => {
       const zip = new JSZip();
       output.innerHTML = '';
-
       const yLines = [0, ...horizontalSplits, canvas.height];
       for (let i = 0; i < yLines.length - 1; i++) {
-        const top = yLines[i];
-        const bottom = yLines[i + 1];
+        const top = yLines[i], bottom = yLines[i + 1];
         const key = `${top}_${bottom}`;
         const xLines = [0, ...(verticalSplitsByZone[key] || []), canvas.width];
-
         for (let j = 0; j < xLines.length - 1; j++) {
-          const left = xLines[j];
-          const right = xLines[j + 1];
-          const w = right - left;
-          const h = bottom - top;
-
-          const dataUrl = cropImageToDataURL(left, top, w, h);
-          const base64 = dataUrl.split(',')[1];
-          const name = `zone${i + 1}_chunk${j + 1}.png`;
-
-          zip.file(name, base64, { base64: true });
-
+          const left = xLines[j], right = xLines[j + 1];
+          const dataUrl = cropImageToDataURL(left, top, right - left, bottom - top);
+          zip.file(`zone${i + 1}_chunk${j + 1}.png`, dataUrl.split(',')[1], { base64: true });
           const imgEl = document.createElement('img');
           imgEl.src = dataUrl;
           output.appendChild(imgEl);
         }
       }
-
       zip.generateAsync({ type: 'blob' }).then(content => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(content);
@@ -622,54 +1060,446 @@
 
     function updateAllProportions() {
       const scaleInput = document.getElementById('scaleWidth');
-      const outputDiv = document.getElementById('proportionalOutput');
+      const outputDiv  = document.getElementById('proportionalOutput');
       const finalWidth = parseInt(scaleInput.value);
       outputDiv.innerHTML = '';
-
-      if (isNaN(finalWidth)) {
-        outputDiv.innerHTML = '<p>Please enter a valid final width.</p>';
-        return;
-      }
-
-      if (!img || img.width === 0) {
-        outputDiv.innerHTML = '<p>Please upload an image first.</p>';
-        return;
-      }
-
+      if (isNaN(finalWidth)) { outputDiv.innerHTML = '<p>Please enter a valid final width.</p>'; return; }
+      if (!img || img.width === 0) { outputDiv.innerHTML = '<p>Please upload an image first.</p>'; return; }
       const scale = finalWidth / img.width;
-
       horizontalSplits.sort((a, b) => a - b);
-      const zones = [];
-
       for (let i = 0; i <= horizontalSplits.length; i++) {
         const yStart = i === 0 ? 0 : horizontalSplits[i - 1];
-        const yEnd = i === horizontalSplits.length ? img.height : horizontalSplits[i];
-        const key = `${yStart}_${yEnd}`;
-        const verticals = verticalSplitsByZone[key] || [];
-
-        const splits = [0, ...verticals.sort((a, b) => a - b), img.width];
+        const yEnd   = i === horizontalSplits.length ? img.height : horizontalSplits[i];
+        const key    = `${yStart}_${yEnd}`;
+        const splits = [0, ...(verticalSplitsByZone[key] || []).sort((a, b) => a - b), img.width];
         const widths = [];
+        for (let j = 0; j < splits.length - 1; j++) widths.push(Math.round((splits[j + 1] - splits[j]) * scale));
+        outputDiv.innerHTML += `<p><strong>Zone ${i + 1}</strong></p><ul>${widths.map((w, k) => `<li>Chunk ${k + 1}: ${w}px</li>`).join('')}</ul>`;
+      }
+    }
 
-        for (let j = 0; j < splits.length - 1; j++) {
-          const originalWidth = splits[j + 1] - splits[j];
-          const scaled = Math.round(originalWidth * scale);
-          widths.push(scaled);
+    /* ════════════════════════════════════════
+       COLOUR SWAPPER
+    ════════════════════════════════════════ */
+    let pickedColour     = null;
+    let activeMapTarget  = null;
+    let colourMapEntries = [];
+    let colourResultHTML = '';
+
+    /* ── HTML file upload ── */
+    const colourHtmlFile = document.getElementById('colour-html-file');
+    const colourHtmlDrop = document.getElementById('colour-html-drop');
+
+    colourHtmlFile.addEventListener('change', () => {
+      if (colourHtmlFile.files.length) loadColourHtmlFile(colourHtmlFile.files[0]);
+    });
+    colourHtmlDrop.addEventListener('dragover', e => { e.preventDefault(); colourHtmlDrop.classList.add('dragover'); });
+    colourHtmlDrop.addEventListener('dragleave', () => colourHtmlDrop.classList.remove('dragover'));
+    colourHtmlDrop.addEventListener('drop', e => {
+      e.preventDefault(); colourHtmlDrop.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && (file.name.endsWith('.html') || file.name.endsWith('.htm'))) loadColourHtmlFile(file);
+    });
+
+    function loadColourHtmlFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('colour-html-input').value = e.target.result;
+        document.getElementById('colour-html-filename').textContent = file.name;
+        document.getElementById('colour-html-status').style.display = 'flex';
+        extractAndBuildMap();
+      };
+      reader.readAsText(file);
+    }
+
+    function clearColourHtml() {
+      colourHtmlFile.value = '';
+      document.getElementById('colour-html-input').value = '';
+      document.getElementById('colour-html-status').style.display = 'none';
+      document.getElementById('colour-html-filename').textContent = '';
+      document.getElementById('colour-mapping').style.display = 'none';
+      document.getElementById('colour-result').style.display = 'none';
+    }
+
+    document.getElementById('colour-html-input').addEventListener('input', extractAndBuildMap);
+
+    /* ── Reference image upload ── */
+    const colourImgFile = document.getElementById('colour-img-file');
+    const colourImgDrop = document.getElementById('colour-img-drop');
+
+    colourImgFile.addEventListener('change', () => {
+      if (colourImgFile.files.length) loadRefImage(colourImgFile.files[0]);
+    });
+    colourImgDrop.addEventListener('dragover', e => { e.preventDefault(); colourImgDrop.classList.add('dragover'); });
+    colourImgDrop.addEventListener('dragleave', () => colourImgDrop.classList.remove('dragover'));
+    colourImgDrop.addEventListener('drop', e => {
+      e.preventDefault(); colourImgDrop.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) loadRefImage(file);
+    });
+
+    function loadRefImage(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const refImg = document.getElementById('ref-img');
+        refImg.src = e.target.result;
+        refImg.onload = () => {
+          document.getElementById('ref-image-preview').style.display = 'block';
+          colourImgDrop.style.display = 'none';
+          extractPaletteFromImage(refImg);
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearRefImage() {
+      colourImgFile.value = '';
+      document.getElementById('ref-img').src = '';
+      document.getElementById('ref-image-preview').style.display = 'none';
+      document.getElementById('colour-img-drop').style.display = 'block';
+      document.getElementById('extracted-palette').style.display = 'none';
+      document.getElementById('picked-colour-indicator').style.display = 'none';
+      pickedColour = null;
+    }
+
+    document.getElementById('ref-img').addEventListener('click', function(e) {
+      const rect = this.getBoundingClientRect();
+      const scaleX = this.naturalWidth / rect.width;
+      const scaleY = this.naturalHeight / rect.height;
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top)  * scaleY);
+      const off = document.createElement('canvas');
+      off.width = this.naturalWidth; off.height = this.naturalHeight;
+      off.getContext('2d').drawImage(this, 0, 0);
+      const px = off.getContext('2d').getImageData(x, y, 1, 1).data;
+      setPickedColour(rgbToHex(px[0], px[1], px[2]));
+    });
+
+    function setPickedColour(hex) {
+      pickedColour = hex;
+      const indicator = document.getElementById('picked-colour-indicator');
+      indicator.style.display = 'flex';
+      document.getElementById('picked-swatch').style.background = hex;
+      document.getElementById('picked-hex-label').textContent = hex;
+
+      if (activeMapTarget !== null) {
+        if (activeMapTarget.type === 'map') {
+          assignColourToMapRow(activeMapTarget.index, hex);
+        } else if (activeMapTarget.type === 'override') {
+          assignColourToOverride(activeMapTarget.key, hex);
         }
+        activeMapTarget = null;
+        document.querySelectorAll('.new-swatch, .override-swatch').forEach(s => s.style.outline = '');
+      }
+    }
 
-        zones.push({
-          zoneIndex: `${i + 1}`,
-          scaledWidths: widths
-        });
+    /* ── Extract palette from image ── */
+    function extractPaletteFromImage(imgEl) {
+      const off = document.createElement('canvas');
+      const maxDim = 200;
+      const scale = Math.min(maxDim / imgEl.naturalWidth, maxDim / imgEl.naturalHeight, 1);
+      off.width  = Math.floor(imgEl.naturalWidth  * scale);
+      off.height = Math.floor(imgEl.naturalHeight * scale);
+      const offCtx = off.getContext('2d');
+      offCtx.drawImage(imgEl, 0, 0, off.width, off.height);
+      const data = offCtx.getImageData(0, 0, off.width, off.height).data;
+
+      const buckets = {};
+      for (let i = 0; i < data.length; i += 4) {
+        const r = Math.round(data[i]   / 32) * 32;
+        const g = Math.round(data[i+1] / 32) * 32;
+        const b = Math.round(data[i+2] / 32) * 32;
+        const k = `${r},${g},${b}`;
+        buckets[k] = (buckets[k] || 0) + 1;
       }
 
-      zones.forEach(zone => {
-        const title = `<p><strong>Zone ${zone.zoneIndex}</strong></p>`;
-        const list = zone.scaledWidths.map((w, i) => `<li>Chunk ${i + 1}: ${w}px</li>`).join('');
-        outputDiv.innerHTML += `${title}<ul>${list}</ul>`;
+      const sorted = Object.entries(buckets)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([k]) => {
+          const [r, g, b] = k.split(',').map(Number);
+          const br = (r + g + b) / 3;
+          return br > 20 && br < 235;
+        })
+        .slice(0, 16);
+
+      const swatchesEl = document.getElementById('palette-swatches');
+      swatchesEl.innerHTML = '';
+      sorted.forEach(([k]) => {
+        const [r, g, b] = k.split(',').map(Number);
+        const hex = rgbToHex(Math.min(r, 255), Math.min(g, 255), Math.min(b, 255));
+        const sw = document.createElement('div');
+        sw.className = 'swatch';
+        sw.style.background = hex;
+        sw.title = hex;
+        sw.innerHTML = `<span class="swatch-hex">${hex}</span>`;
+        sw.addEventListener('click', () => {
+          document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+          sw.classList.add('selected');
+          setPickedColour(hex);
+        });
+        swatchesEl.appendChild(sw);
+      });
+
+      document.getElementById('extracted-palette').style.display = 'block';
+    }
+
+    /* ── Extract hex colours from HTML and build mapping UI ── */
+    function extractAndBuildMap() {
+      const html = document.getElementById('colour-html-input').value;
+      if (!html.trim()) { document.getElementById('colour-mapping').style.display = 'none'; return; }
+
+      const hexSet = new Set();
+      const hexRegex = /#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g;
+      let m;
+      while ((m = hexRegex.exec(html)) !== null) hexSet.add(normaliseHex(m[0]));
+
+      const filtered = [...hexSet].filter(h => h !== '#ffffff' && h !== '#000000');
+      if (filtered.length === 0) { document.getElementById('colour-mapping').style.display = 'none'; return; }
+
+      colourMapEntries = filtered.map(hex => ({ original: hex, replacement: hex }));
+      renderMapRows();
+      document.getElementById('colour-mapping').style.display = 'block';
+    }
+
+    function renderMapRows() {
+      const container = document.getElementById('map-rows');
+      container.innerHTML = '';
+      colourMapEntries.forEach((entry, i) => {
+        const row = document.createElement('div');
+        row.className = 'map-row';
+        row.innerHTML = `
+          <div class="orig-swatch" style="background:${entry.original};"></div>
+          <span class="orig-hex">${entry.original}</span>
+          <span class="arrow">→</span>
+          <div class="new-swatch" id="new-swatch-${i}" style="background:${entry.replacement};"
+               title="Click then pick from image or palette"></div>
+          <input class="new-hex-input" id="new-hex-${i}" type="text"
+                 value="${entry.replacement}" maxlength="7" placeholder="#rrggbb" />
+        `;
+        container.appendChild(row);
+
+        document.getElementById(`new-swatch-${i}`).addEventListener('click', () => {
+          document.querySelectorAll('.new-swatch, .override-swatch').forEach(s => s.style.outline = '');
+          activeMapTarget = { type: 'map', index: i };
+          if (pickedColour) {
+            assignColourToMapRow(i, pickedColour);
+            activeMapTarget = null;
+          } else {
+            document.getElementById(`new-swatch-${i}`).style.outline = '3px solid #3182ce';
+          }
+        });
+
+        document.getElementById(`new-hex-${i}`).addEventListener('input', function() {
+          const val = this.value.trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+            colourMapEntries[i].replacement = val;
+            document.getElementById(`new-swatch-${i}`).style.background = val;
+          }
+        });
       });
     }
 
-    /* ── Unsubscribe tool logic ── */
+    function assignColourToMapRow(index, hex) {
+      colourMapEntries[index].replacement = hex;
+      const sw  = document.getElementById(`new-swatch-${index}`);
+      const inp = document.getElementById(`new-hex-${index}`);
+      if (sw)  { sw.style.background = hex; sw.style.outline = ''; }
+      if (inp) inp.value = hex;
+    }
+
+    /* ── Override toggles ── */
+    function toggleOverride(key) {
+      const enabled = document.getElementById(`override-${key}-enabled`).checked;
+      const swatch  = document.getElementById(`override-${key}-swatch`);
+      const input   = document.getElementById(`override-${key}-hex`);
+      if (enabled) {
+        swatch.classList.remove('disabled');
+        input.disabled = false;
+      } else {
+        swatch.classList.add('disabled');
+        input.disabled = true;
+        if (activeMapTarget && activeMapTarget.type === 'override' && activeMapTarget.key === key) {
+          activeMapTarget = null;
+          document.querySelectorAll('.new-swatch, .override-swatch').forEach(s => s.style.outline = '');
+        }
+      }
+    }
+
+    function activateOverridePick(key) {
+      const enabled = document.getElementById(`override-${key}-enabled`).checked;
+      if (!enabled) return;
+      document.querySelectorAll('.new-swatch, .override-swatch').forEach(s => s.style.outline = '');
+      activeMapTarget = { type: 'override', key };
+      if (pickedColour) {
+        assignColourToOverride(key, pickedColour);
+        activeMapTarget = null;
+      } else {
+        document.getElementById(`override-${key}-swatch`).style.outline = '3px solid #3182ce';
+      }
+    }
+
+    function assignColourToOverride(key, hex) {
+      const sw  = document.getElementById(`override-${key}-swatch`);
+      const inp = document.getElementById(`override-${key}-hex`);
+      if (sw)  { sw.style.background = hex; sw.style.outline = ''; }
+      if (inp) inp.value = hex;
+    }
+
+    function syncOverrideSwatch(key) {
+      const val = document.getElementById(`override-${key}-hex`).value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(val))
+        document.getElementById(`override-${key}-swatch`).style.background = val;
+    }
+
+    /* ── Apply colour swap ── */
+    function applyColourSwap() {
+      clearColourError();
+      const rawHtml = document.getElementById('colour-html-input').value.trim();
+      if (!rawHtml) { showColourError('Please upload or paste your HTML first.'); return; }
+      if (colourMapEntries.length === 0) { showColourError('No colours found in the HTML to remap.'); return; }
+
+      // Read latest typed values from inputs
+      colourMapEntries.forEach((entry, i) => {
+        const inp = document.getElementById(`new-hex-${i}`);
+        if (inp) {
+          const val = inp.value.trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(val)) entry.replacement = val;
+        }
+      });
+
+      // Build replacement map: normalised original → replacement
+      const replMap = {};
+      colourMapEntries.forEach(e => { replMap[e.original.toLowerCase()] = e.replacement.toLowerCase(); });
+
+      // Step 1: Replace all hex codes in the raw string
+      let result = rawHtml.replace(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g, match => {
+        const norm = normaliseHex(match).toLowerCase();
+        return replMap[norm] || match;
+      });
+
+      // Step 2: Shape text colour override — use DOM-based approach
+      const shapeTextEnabled = document.getElementById('override-shape-text-enabled').checked;
+      const shapeTextColour  = document.getElementById('override-shape-text-hex').value.trim();
+      if (shapeTextEnabled && /^#[0-9a-fA-F]{6}$/i.test(shapeTextColour)) {
+        result = applyShapeTextColourDOM(result, shapeTextColour);
+      }
+
+      // Step 3: Page background override
+      const bgEnabled = document.getElementById('override-bg-enabled').checked;
+      const bgColour  = document.getElementById('override-bg-hex').value.trim();
+      if (bgEnabled && /^#[0-9a-fA-F]{6}$/i.test(bgColour)) {
+        result = applyPageBackground(result, bgColour);
+      }
+
+      colourResultHTML = result;
+      document.getElementById('colour-result-pre').textContent = result;
+      document.getElementById('colour-result').style.display = 'block';
+      document.getElementById('colour-result').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    /*
+      applyShapeTextColourDOM:
+      Parses the HTML with DOMParser, walks every element that has a
+      non-white background(-color) in its inline style, then walks ALL
+      descendant elements and sets their inline color to the chosen colour.
+      This correctly handles the pattern where a <div> has the background
+      and child <span> elements carry the text color.
+    */
+    function applyShapeTextColourDOM(html, textColour) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      // Find all elements with a coloured (non-white) inline background
+      const allElements = doc.body.querySelectorAll('*');
+
+      allElements.forEach(el => {
+        const style = el.getAttribute('style') || '';
+        const bgMatch = style.match(/background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,6})/i);
+        if (!bgMatch) return;
+
+        const bgHex = normaliseHex(bgMatch[1]);
+        // Skip white and very-light backgrounds
+        if (bgHex === '#ffffff' || bgHex === '#fff') return;
+
+        // This element is a "shape container" — set color on it and ALL its descendants
+        setInlineColour(el, textColour);
+        el.querySelectorAll('*').forEach(child => setInlineColour(child, textColour));
+      });
+
+      // Serialise back to string — use body innerHTML to avoid injected <html><head> wrapper
+      return doc.body.innerHTML;
+    }
+
+    /*
+      setInlineColour:
+      Sets or replaces the color property in an element's inline style attribute.
+    */
+    function setInlineColour(el, colour) {
+      let style = el.getAttribute('style') || '';
+      if (/\bcolor\s*:/i.test(style)) {
+        // Replace existing color value
+        style = style.replace(/\bcolor\s*:\s*[^;"]*/gi, `color:${colour}`);
+      } else {
+        // Append color
+        style = style.trimEnd();
+        if (style.length > 0 && !style.endsWith(';')) style += ';';
+        style += `color:${colour};`;
+      }
+      el.setAttribute('style', style);
+    }
+
+    /*
+      applyPageBackground:
+      Replaces background/background-color on the first element in the HTML
+      that has one of those properties set inline.
+    */
+    function applyPageBackground(html, bgColour) {
+      let replaced = false;
+      return html.replace(/style="([^"]*)"/gi, (fullMatch, styleContent) => {
+        if (replaced) return fullMatch;
+        if (!/background(?:-color)?\s*:/i.test(styleContent)) return fullMatch;
+        replaced = true;
+        let newStyle = styleContent
+          .replace(/background-color\s*:\s*[^;"]*/gi, `background-color:${bgColour}`)
+          .replace(/background\s*:\s*[^;"]*/gi,       `background:${bgColour}`);
+        return `style="${newStyle}"`;
+      });
+    }
+
+    function downloadColourResult() {
+      if (!colourResultHTML) return;
+      const blob = new Blob([colourResultHTML], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'colour_swapped.html';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    /* ── Colour utilities ── */
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+
+    function normaliseHex(hex) {
+      hex = hex.trim();
+      if (hex.length === 4) hex = '#' + hex[1]+hex[1] + hex[2]+hex[2] + hex[3]+hex[3];
+      return hex.toLowerCase();
+    }
+
+    function showColourError(msg) {
+      const el = document.getElementById('colour-error-msg');
+      el.textContent = msg; el.style.display = 'block';
+    }
+
+    function clearColourError() {
+      const el = document.getElementById('colour-error-msg');
+      el.textContent = ''; el.style.display = 'none';
+    }
+
+    /* ════════════════════════════════════════
+       UNSUBSCRIBE TOOL
+    ════════════════════════════════════════ */
     const COUNTRIES = [
       { code: "AE",   label: "United Arab Emirates", link: "{{unsubscribe_product_link[,AE]}}",  sfmc: false },
       { code: "OM",   label: "Oman",                 link: "{{unsubscribe_product_link[,OM]}}",  sfmc: false },
@@ -681,75 +1511,67 @@
 
     function findUnsubscribeHref(html) {
       const parser = new DOMParser();
-      const doc    = parser.parseFromString(html, "text/html");
-      const links  = doc.querySelectorAll("a");
+      const doc    = parser.parseFromString(html, 'text/html');
+      const links  = doc.querySelectorAll('a');
       for (const a of links) {
-        if (/unsubscribe here/i.test(a.textContent.trim())) {
-          return { href: a.getAttribute("href") || "", outerHTML: a.outerHTML };
-        }
+        if (/unsubscribe here/i.test(a.textContent.trim()))
+          return { href: a.getAttribute('href') || '', outerHTML: a.outerHTML };
       }
       return null;
     }
 
     function replaceUnsubscribeHref(html, oldHref, newHref) {
-      const escaped     = escapeRegex(oldHref);
-      const hrefPattern = new RegExp(`(<a\\b[^>]*?\\bhref=)(["'])(${escaped})(\\2)`, "i");
-      return html.replace(hrefPattern, (m, before, quote, url, closing) => before + quote + newHref + closing);
+      const escaped = escapeRegex(oldHref);
+      const pat = new RegExp(`(<a\\b[^>]*?\\bhref=)(["'])(${escaped})(\\2)`, 'i');
+      return html.replace(pat, (m, before, quote, url, closing) => before + quote + newHref + closing);
     }
 
-    function escapeRegex(str) {
-      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    }
+    function escapeRegex(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
-    const textarea = document.getElementById("html-input");
-    textarea.addEventListener("input", updateMatchPreview);
+    const textarea = document.getElementById('html-input');
+    textarea.addEventListener('input', updateMatchPreview);
 
     function updateMatchPreview() {
       const html    = textarea.value;
-      const preview = document.getElementById("match-preview");
-      const hrefEl  = document.getElementById("match-href");
-      const tagEl   = document.getElementById("match-full-tag");
-      if (!html.trim()) { preview.style.display = "none"; return; }
+      const preview = document.getElementById('match-preview');
+      const hrefEl  = document.getElementById('match-href');
+      const tagEl   = document.getElementById('match-full-tag');
+      if (!html.trim()) { preview.style.display = 'none'; return; }
       const result = findUnsubscribeHref(html);
       if (result) {
-        hrefEl.textContent    = result.href || "(empty)";
-        tagEl.textContent     = result.outerHTML;
-        preview.style.display = "block";
+        hrefEl.textContent = result.href || '(empty)';
+        tagEl.textContent  = result.outerHTML;
+        preview.style.display = 'block';
         clearError();
       } else {
-        preview.style.display = "none";
+        preview.style.display = 'none';
       }
     }
 
-    const fileInput    = document.getElementById("file-input");
-    const dropZone     = document.getElementById("drop-zone");
-    const fileNameEl   = document.getElementById("loaded-filename");
-    const uploadStatus = document.getElementById("upload-status");
+    const fileInput    = document.getElementById('file-input');
+    const dropZone     = document.getElementById('drop-zone');
+    const fileNameEl   = document.getElementById('loaded-filename');
+    const uploadStatus = document.getElementById('upload-status');
 
-    fileInput.addEventListener("change", () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
-
-    dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
-    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
-    dropZone.addEventListener("drop", e => {
-      e.preventDefault();
-      dropZone.classList.remove("dragover");
+    fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+    dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('dragover');
       const file = e.dataTransfer.files[0];
-      if (file && (file.name.endsWith(".html") || file.name.endsWith(".htm"))) {
-        handleFile(file);
-      } else {
-        showError("Please drop a valid .html or .htm file.");
-      }
+      if (file && (file.name.endsWith('.html') || file.name.endsWith('.htm'))) handleFile(file);
+      else showError('Please drop a valid .html or .htm file.');
     });
 
     function handleFile(file) {
       const reader = new FileReader();
       reader.onload = e => {
         textarea.value = e.target.result;
-        const baseName      = file.name.replace(/\.(html|htm)$/i, "");
-        const filenameInput = document.getElementById("filename-input");
+        const baseName = file.name.replace(/\.(html|htm)$/i, '');
+        const filenameInput = document.getElementById('filename-input');
         if (!filenameInput.value) filenameInput.value = baseName;
         fileNameEl.textContent     = file.name;
-        uploadStatus.style.display = "flex";
+        uploadStatus.style.display = 'flex';
         clearError();
         updateMatchPreview();
       };
@@ -757,11 +1579,11 @@
     }
 
     function clearFile() {
-      fileInput.value                = "";
-      textarea.value                 = "";
-      uploadStatus.style.display     = "none";
-      fileNameEl.textContent         = "";
-      document.getElementById("match-preview").style.display = "none";
+      fileInput.value = '';
+      textarea.value  = '';
+      uploadStatus.style.display = 'none';
+      fileNameEl.textContent     = '';
+      document.getElementById('match-preview').style.display = 'none';
     }
 
     let generatedFiles = [];
@@ -770,21 +1592,21 @@
       clearError();
       generatedFiles = [];
       const html     = textarea.value.trim();
-      const baseName = document.getElementById("filename-input").value.trim() || "email";
-      if (!html) { showError("Please upload a file or paste your HTML template first."); return; }
+      const baseName = document.getElementById('filename-input').value.trim() || 'email';
+      if (!html) { showError('Please upload a file or paste your HTML template first.'); return; }
       const found = findUnsubscribeHref(html);
       if (!found) { showError('Could not find an <a> tag containing the text "Unsubscribe here".'); return; }
 
-      const resultsList = document.getElementById("results-list");
-      resultsList.innerHTML = "";
+      const resultsList = document.getElementById('results-list');
+      resultsList.innerHTML = '';
 
       COUNTRIES.forEach(country => {
         const modified = replaceUnsubscribeHref(html, found.href, country.link);
         const filename  = `${baseName}_${country.code}.html`;
         generatedFiles.push({ filename, content: modified });
 
-        const card = document.createElement("div");
-        card.className = "result-card";
+        const card = document.createElement('div');
+        card.className = 'result-card';
         card.innerHTML = `
           <div class="result-header">
             <div>
@@ -803,9 +1625,9 @@
         resultsList.appendChild(card);
       });
 
-      const resultsDiv = document.getElementById("results");
-      resultsDiv.style.display = "block";
-      resultsDiv.scrollIntoView({ behavior: "smooth" });
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.style.display = 'block';
+      resultsDiv.scrollIntoView({ behavior: 'smooth' });
     }
 
     function downloadFile(filename) {
@@ -814,32 +1636,30 @@
     }
 
     function downloadAll() {
-      generatedFiles.forEach((file, i) => {
-        setTimeout(() => triggerDownload(file.filename, file.content), i * 150);
-      });
+      generatedFiles.forEach((file, i) => setTimeout(() => triggerDownload(file.filename, file.content), i * 150));
     }
 
     function triggerDownload(filename, content) {
-      const blob = new Blob([content], { type: "text/html;charset=utf-8" });
+      const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
       const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
+      const a    = document.createElement('a');
       a.href = url; a.download = filename;
       document.body.appendChild(a); a.click();
       document.body.removeChild(a); URL.revokeObjectURL(url);
     }
 
     function showError(msg) {
-      const el = document.getElementById("error-msg");
-      el.textContent = msg; el.style.display = "block";
+      const el = document.getElementById('error-msg');
+      el.textContent = msg; el.style.display = 'block';
     }
 
     function clearError() {
-      const el = document.getElementById("error-msg");
-      el.textContent = ""; el.style.display = "none";
+      const el = document.getElementById('error-msg');
+      el.textContent = ''; el.style.display = 'none';
     }
 
     function escapeHtml(str) {
-      return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
   </script>
 
