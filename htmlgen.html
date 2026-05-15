@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Tools</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Tab bar */
+    .tab-bar {
+      background: #2d3748;
+      display: flex;
+      gap: 2px;
+      padding: 0 24px;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      padding: 14px 24px;
+      background: none;
+      border: none;
+      color: #a0aec0;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover { color: #e2e8f0; }
+
+    .tab-btn.active {
+      color: #fff;
+      border-bottom-color: #4299e1;
+    }
+
+    /* Tab panels */
+    .tab-panel {
+      display: none;
+      flex: 1;
+    }
+
+    .tab-panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Unsubscribe tool panel — scrollable */
+    #panel-unsub {
+      align-items: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    /* Image splitter panel — iframe fills full remaining height */
+    #panel-splitter {
+      flex: 1;
+    }
+
+    #panel-splitter iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      flex: 1;
+    }
+
+    /* iframe blocked message */
+    #iframe-blocked {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 16px;
+      color: #4a5568;
+      text-align: center;
+      padding: 40px;
+    }
+
+    #iframe-blocked h2 { font-size: 1.2rem; color: #2d3748; }
+    #iframe-blocked p { font-size: 0.92rem; color: #718096; max-width: 480px; }
+    #iframe-blocked a {
+      display: inline-block;
+      padding: 10px 22px;
+      background: #3182ce;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    #iframe-blocked a:hover { background: #2b6cb0; }
+
+    /* ── Everything below is the unsubscribe tool styles, unchanged ── */
+    h1 { font-size: 1.8rem; margin-bottom: 8px; color: #2d3748; }
+
+    p.subtitle {
+      color: #718096;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 30px;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    label { display: block; font-weight: 600; margin-bottom: 8px; color: #4a5568; }
+
+    .filename-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .filename-row > div { flex: 1; }
+
+    .filename-row input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .filename-row input:focus { border-color: #4299e1; }
+
+    .upload-section { margin-bottom: 20px; }
+
+    .upload-drop-zone {
+      border: 2px dashed #bee3f8;
+      border-radius: 10px;
+      background: #ebf8ff;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .upload-drop-zone:hover,
+    .upload-drop-zone.dragover { border-color: #3182ce; background: #dbeafe; }
+
+    .upload-drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .upload-drop-zone p { color: #2b6cb0; font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+    .upload-drop-zone span { color: #718096; font-size: 0.82rem; }
+
+    .upload-status {
+      margin-top: 10px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: #38a169;
+      font-weight: 600;
+    }
+
+    .upload-status .clear-btn {
+      background: none;
+      border: none;
+      color: #e53e3e;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .upload-status .clear-btn:hover { background: #fff5f5; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      color: #a0aec0;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    textarea {
+      width: 100%;
+      height: 240px;
+      padding: 14px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafafa;
+    }
+
+    textarea:focus { border-color: #4299e1; background: #fff; }
+
+    .textarea-hint { font-size: 0.78rem; color: #a0aec0; margin-top: 6px; }
+
+    #match-preview {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #f0fff4;
+      border: 1px solid #9ae6b4;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #276749;
+    }
+
+    #match-preview strong { display: block; margin-bottom: 6px; }
+
+    #match-preview code {
+      display: block;
+      background: #c6f6d5;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+    #match-preview .full-tag {
+      margin-top: 8px;
+      background: #e6ffed;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-family: monospace;
+      font-size: 0.78rem;
+      word-break: break-all;
+      white-space: pre-wrap;
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+
+    .btn-generate {
+      margin-top: 20px;
+      padding: 12px 28px;
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    .btn-generate:hover { background: #2b6cb0; }
+
+    #error-msg {
+      margin-top: 12px;
+      color: #e53e3e;
+      font-size: 0.9rem;
+      display: none;
+      padding: 10px 14px;
+      background: #fff5f5;
+      border: 1px solid #fed7d7;
+      border-radius: 8px;
+    }
+
+    #results {
+      margin-top: 36px;
+      width: 100%;
+      max-width: 860px;
+      display: none;
+    }
+
+    #results h2 { font-size: 1.2rem; color: #2d3748; margin-bottom: 16px; }
+
+    .result-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: #ebf8ff;
+      border-bottom: 1px solid #bee3f8;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .result-header .country-label { font-weight: 700; color: #2b6cb0; font-size: 0.95rem; }
+    .result-header .filename-label { font-size: 0.82rem; color: #718096; font-family: monospace; }
+
+    .result-header .btn-download {
+      padding: 7px 16px;
+      background: #38a169;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .result-header .btn-download:hover { background: #2f855a; }
+
+    .result-body { padding: 16px 20px; }
+
+    .result-body pre {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 14px;
+      font-size: 0.82rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .btn-download-all {
+      display: block;
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 12px 32px;
+      background: #6b46c1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-download-all:hover { background: #553c9a; }
+
+    .tag {
+      display: inline-block;
+      background: #e9d8fd;
+      color: #553c9a;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .tag-sfmc { background: #feebc8; color: #c05621; }
+  </style>
+</head>
+<body>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('unsub', this)">Unsubscribe Link Generator</button>
+    <button class="tab-btn" onclick="switchTab('splitter', this)">Image Splitter</button>
+  </div>
+
+  <!-- Unsubscribe tool panel -->
+  <div class="tab-panel active" id="panel-unsub">
+
+    <h1>Unsubscribe Link Generator</h1>
+    <p class="subtitle">
+      Upload or paste your HTML template. Only the unsubscribe link's href is replaced —
+      all other links, colours, styles, and attributes are completely untouched.
+    </p>
+
+    <div class="card">
+      <div class="filename-row">
+        <div>
+          <label for="filename-input">Base Filename <span style="font-weight:400;color:#a0aec0">(without extension)</span></label>
+          <input type="text" id="filename-input" placeholder="e.g. newsletter_may2026" />
+        </div>
+      </div>
+
+      <div class="upload-section">
+        <label>Upload HTML File</label>
+        <div class="upload-drop-zone" id="drop-zone">
+          <input type="file" id="file-input" accept=".html,.htm" />
+          <p>Click to browse or drag and drop your HTML file here</p>
+          <span>Accepts .html and .htm files</span>
+        </div>
+        <div class="upload-status" id="upload-status">
+          <span>Loaded: <strong id="loaded-filename"></strong></span>
+          <button class="clear-btn" onclick="clearFile()">Clear</button>
+        </div>
+      </div>
+
+      <div class="divider">OR paste HTML manually</div>
+
+      <div>
+        <label for="html-input">HTML Template</label>
+        <textarea id="html-input" placeholder="Paste your full HTML here..."></textarea>
+        <p class="textarea-hint">Uploading a file will populate this field automatically — you can still edit before generating.</p>
+      </div>
+
+      <div id="match-preview">
+        <strong>Detected unsubscribe link href:</strong>
+        <code id="match-href"></code>
+        <div class="full-tag" id="match-full-tag"></div>
+      </div>
+
+      <button class="btn-generate" onclick="generate()">Generate Versions</button>
+      <div id="error-msg"></div>
+    </div>
+
+    <div id="results">
+      <h2>Generated Files</h2>
+      <button class="btn-download-all" onclick="downloadAll()">Download All 6 Files</button>
+      <div id="results-list"></div>
+    </div>
+
+  </div>
+
+  <!-- Image splitter panel -->
+  <div class="tab-panel" id="panel-splitter">
+    <iframe
+      id="splitter-iframe"
+      src="about:blank"
+      data-src="https://arcenter.github.io/image-splitter/"
+      title="Image Splitter"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups"
+    ></iframe>
+    <div id="iframe-blocked">
+      <h2>Unable to embed Image Splitter</h2>
+      <p>
+        This site has blocked embedding via iframe. You can still open it directly
+        in a new tab using the button below.
+      </p>
+      <a href="https://arcenter.github.io/image-splitter/" target="_blank" rel="noopener">Open Image Splitter</a>
+    </div>
+  </div>
+
+  <script>
+    /* ── Tab switching ── */
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-" + name).classList.add("active");
+
+      // Lazy-load the iframe only when the tab is first opened
+      if (name === "splitter") {
+        const iframe = document.getElementById("splitter-iframe");
+        if (iframe.src === "about:blank" || iframe.src === "") {
+          iframe.src = iframe.dataset.src;
+
+          // Detect if the iframe was blocked (X-Frame-Options / CSP)
+          iframe.addEventListener("load", function onLoad() {
+            iframe.removeEventListener("load", onLoad);
+            try {
+              // If we can access contentDocument it loaded fine
+              // (will throw if blocked by CORS/frame policy)
+              const doc = iframe.contentDocument;
+              if (!doc || doc.URL === "about:blank") throw new Error("blocked");
+              iframe.style.display = "block";
+              document.getElementById("iframe-blocked").style.display = "none";
+            } catch (e) {
+              iframe.style.display = "none";
+              document.getElementById("iframe-blocked").style.display = "flex";
+            }
+          });
+
+          // Fallback: if load never fires within 5s, show blocked message
+          setTimeout(() => {
+            if (iframe.src !== "about:blank" && iframe.contentDocument === null) {
+              iframe.style.display = "none";
+              document.getElementById("iframe-blocked").style.display = "flex";
+            }
+          }, 5000);
+        }
+      }
+    }
+
+    /* ── Unsubscribe tool logic (unchanged) ── */
+    const COUNTRIES = [
+      { code: "AE",   label: "United Arab Emirates", link: "{{unsubscribe_product_link[,AE]}}",  sfmc: false },
+      { code: "OM",   label: "Oman",                 link: "{{unsubscribe_product_link[,OM]}}",  sfmc: false },
+      { code: "QA",   label: "Qatar",                link: "{{unsubscribe_product_link[,QA]}}",  sfmc: false },
+      { code: "KW",   label: "Kuwait",               link: "{{unsubscribe_product_link[,KW]}}",  sfmc: false },
+      { code: "BH",   label: "Bahrain",              link: "{{unsubscribe_product_link[,BH]}}",  sfmc: false },
+      { code: "SFMC", label: "SFMC Link",            link: "https://connect.msdgcc.com/communication-preferences/?imtoken=%%token%%", sfmc: true },
+    ];
+
+    function findUnsubscribeHref(html) {
+      const parser = new DOMParser();
+      const doc    = parser.parseFromString(html, "text/html");
+      const links  = doc.querySelectorAll("a");
+      for (const a of links) {
+        if (/unsubscribe here/i.test(a.textContent.trim())) {
+          return { href: a.getAttribute("href") || "", outerHTML: a.outerHTML };
+        }
+      }
+      return null;
+    }
+
+    function replaceUnsubscribeHref(html, oldHref, newHref) {
+      const escaped     = escapeRegex(oldHref);
+      const hrefPattern = new RegExp(`(<a\\b[^>]*?\\bhref=)(["'])(${escaped})(\\2)`, "i");
+      return html.replace(hrefPattern, (m, before, quote, url, closing) => before + quote + newHref + closing);
+    }
+
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    const textarea = document.getElementById("html-input");
+    textarea.addEventListener("input", updateMatchPreview);
+
+    function updateMatchPreview() {
+      const html    = textarea.value;
+      const preview = document.getElementById("match-preview");
+      const hrefEl  = document.getElementById("match-href");
+      const tagEl   = document.getElementById("match-full-tag");
+      if (!html.trim()) { preview.style.display = "none"; return; }
+      const result = findUnsubscribeHref(html);
+      if (result) {
+        hrefEl.textContent    = result.href || "(empty)";
+        tagEl.textContent     = result.outerHTML;
+        preview.style.display = "block";
+        clearError();
+      } else {
+        preview.style.display = "none";
+      }
+    }
+
+    const fileInput    = document.getElementById("file-input");
+    const dropZone     = document.getElementById("drop-zone");
+    const fileNameEl   = document.getElementById("loaded-filename");
+    const uploadStatus = document.getElementById("upload-status");
+
+    fileInput.addEventListener("change", () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+    dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file && (file.name.endsWith(".html") || file.name.endsWith(".htm"))) {
+        handleFile(file);
+      } else {
+        showError("Please drop a valid .html or .htm file.");
+      }
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        textarea.value = e.target.result;
+        const baseName      = file.name.replace(/\.(html|htm)$/i, "");
+        const filenameInput = document.getElementById("filename-input");
+        if (!filenameInput.value) filenameInput.value = baseName;
+        fileNameEl.textContent     = file.name;
+        uploadStatus.style.display = "flex";
+        clearError();
+        updateMatchPreview();
+      };
+      reader.readAsText(file);
+    }
+
+    function clearFile() {
+      fileInput.value                = "";
+      textarea.value                 = "";
+      uploadStatus.style.display     = "none";
+      fileNameEl.textContent         = "";
+      document.getElementById("match-preview").style.display = "none";
+    }
+
+    let generatedFiles = [];
+
+    function generate() {
+      clearError();
+      generatedFiles = [];
+      const html     = textarea.value.trim();
+      const baseName = document.getElementById("filename-input").value.trim() || "email";
+      if (!html) { showError("Please upload a file or paste your HTML template first."); return; }
+      const found = findUnsubscribeHref(html);
+      if (!found) { showError('Could not find an <a> tag containing the text "Unsubscribe here".'); return; }
+
+      const resultsList = document.getElementById("results-list");
+      resultsList.innerHTML = "";
+
+      COUNTRIES.forEach(country => {
+        const modified = replaceUnsubscribeHref(html, found.href, country.link);
+        const filename  = `${baseName}_${country.code}.html`;
+        generatedFiles.push({ filename, content: modified });
+
+        const card = document.createElement("div");
+        card.className = "result-card";
+        card.innerHTML = `
+          <div class="result-header">
+            <div>
+              <span class="country-label">${country.label}</span>
+              <span class="tag ${country.sfmc ? 'tag-sfmc' : ''}">${country.code}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <span class="filename-label">${filename}</span>
+              <button class="btn-download" onclick="downloadFile('${filename}')">Download</button>
+            </div>
+          </div>
+          <div class="result-body">
+            <pre>${escapeHtml(modified)}</pre>
+          </div>
+        `;
+        resultsList.appendChild(card);
+      });
+
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.style.display = "block";
+      resultsDiv.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function downloadFile(filename) {
+      const file = generatedFiles.find(f => f.filename === filename);
+      if (file) triggerDownload(file.filename, file.content);
+    }
+
+    function downloadAll() {
+      generatedFiles.forEach((file, i) => {
+        setTimeout(() => triggerDownload(file.filename, file.content), i * 150);
+      });
+    }
+
+    function triggerDownload(filename, content) {
+      const blob = new Blob([content], { type: "text/html;charset=utf-8" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("error-msg");
+      el.textContent = msg; el.style.display = "block";
+    }
+
+    function clearError() {
+      const el = document.getElementById("error-msg");
+      el.textContent = ""; el.style.display = "none";
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+  </script>
+
+</body>
+</html>
