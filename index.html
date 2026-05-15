@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Email Tools</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -63,48 +64,34 @@
       overflow-y: auto;
     }
 
-    /* Image splitter panel — iframe fills full remaining height */
+    /* Image splitter panel */
     #panel-splitter {
-      flex: 1;
-    }
-
-    #panel-splitter iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-      flex: 1;
-    }
-
-    /* iframe blocked message */
-    #iframe-blocked {
-      display: none;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 16px;
-      color: #4a5568;
+      padding: 40px 20px;
+      overflow-y: auto;
+      font-family: sans-serif;
       text-align: center;
-      padding: 40px;
     }
 
-    #iframe-blocked h2 { font-size: 1.2rem; color: #2d3748; }
-    #iframe-blocked p { font-size: 0.92rem; color: #718096; max-width: 480px; }
-    #iframe-blocked a {
-      display: inline-block;
-      padding: 10px 22px;
+    #panel-splitter h2 { font-size: 1.5rem; margin-bottom: 16px; color: #2d3748; }
+    #panel-splitter canvas { border: 1px solid black; cursor: crosshair; max-width: 100%; }
+    #panel-splitter #splitter-output img { max-width: 100px; margin: 5px; border: 1px solid #ccc; }
+    #panel-splitter label { font-weight: 600; color: #4a5568; }
+    #panel-splitter input[type="number"] { padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9rem; }
+    #panel-splitter button {
+      padding: 8px 18px;
       background: #3182ce;
       color: white;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
+      border: none;
+      border-radius: 6px;
       font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
       transition: background 0.2s;
     }
-    #iframe-blocked a:hover { background: #2b6cb0; }
+    #panel-splitter button:hover { background: #2b6cb0; }
 
-    /* ── Everything below is the unsubscribe tool styles, unchanged ── */
+    /* ── Unsubscribe tool styles ── */
     h1 { font-size: 1.8rem; margin-bottom: 8px; color: #2d3748; }
 
     p.subtitle {
@@ -453,23 +440,22 @@
 
   </div>
 
-  <!-- Image splitter panel -->
+  <!-- Image Splitter panel -->
   <div class="tab-panel" id="panel-splitter">
-    <iframe
-      id="splitter-iframe"
-      src="about:blank"
-      data-src="https://arcenter.github.io/image-splitter/"
-      title="Image Splitter"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups"
-    ></iframe>
-    <div id="iframe-blocked">
-      <h2>Unable to embed Image Splitter</h2>
-      <p>
-        This site has blocked embedding via iframe. You can still open it directly
-        in a new tab using the button below.
-      </p>
-      <a href="https://arcenter.github.io/image-splitter/" target="_blank" rel="noopener">Open Image Splitter</a>
+    <h2>Image Splitter</h2>
+    <input type="file" id="splitter-upload" accept="image/*"><br><br>
+    <canvas id="splitter-canvas"></canvas>
+    <br><br>
+    <label for="scaleWidth">Final Width:</label>
+    <input type="number" id="scaleWidth" placeholder="e.g. 600">
+    <button onclick="updateAllProportions()">Update Proportions</button>
+    <div id="proportionalOutput"></div>
+    <br><br>
+    <div>
+      <button id="downloadZip">Download ZIP</button>
     </div>
+    <div id="splitter-output"></div>
+    <p style="margin-top: 24px; font-size: 0.75rem; color: #a0aec0;">Credits: <a href="https://github.com/arcenter" target="_blank" rel="noopener" style="color: #a0aec0; text-decoration: underline;">arcenter</a> on GitHub</p>
   </div>
 
   <script>
@@ -479,41 +465,211 @@
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById("panel-" + name).classList.add("active");
+    }
 
-      // Lazy-load the iframe only when the tab is first opened
-      if (name === "splitter") {
-        const iframe = document.getElementById("splitter-iframe");
-        if (iframe.src === "about:blank" || iframe.src === "") {
-          iframe.src = iframe.dataset.src;
+    /* ── Image Splitter logic ── */
+    const canvas = document.getElementById('splitter-canvas');
+    const ctx = canvas.getContext('2d');
+    const upload = document.getElementById('splitter-upload');
+    const downloadZipBtn = document.getElementById('downloadZip');
+    const output = document.getElementById('splitter-output');
 
-          // Detect if the iframe was blocked (X-Frame-Options / CSP)
-          iframe.addEventListener("load", function onLoad() {
-            iframe.removeEventListener("load", onLoad);
-            try {
-              // If we can access contentDocument it loaded fine
-              // (will throw if blocked by CORS/frame policy)
-              const doc = iframe.contentDocument;
-              if (!doc || doc.URL === "about:blank") throw new Error("blocked");
-              iframe.style.display = "block";
-              document.getElementById("iframe-blocked").style.display = "none";
-            } catch (e) {
-              iframe.style.display = "none";
-              document.getElementById("iframe-blocked").style.display = "flex";
-            }
-          });
+    let img = new Image();
+    let horizontalSplits = [];
+    let verticalSplitsByZone = {};
+    let splitHistory = [];
+    let mode = 'H';
 
-          // Fallback: if load never fires within 5s, show blocked message
-          setTimeout(() => {
-            if (iframe.src !== "about:blank" && iframe.contentDocument === null) {
-              iframe.style.display = "none";
-              document.getElementById("iframe-blocked").style.display = "flex";
-            }
-          }, 5000);
-        }
+    upload.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            horizontalSplits = [];
+            verticalSplitsByZone = {};
+            drawImage();
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function drawImage() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 2;
+      horizontalSplits.forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      });
+      const yLines = [0, ...horizontalSplits, canvas.height];
+      for (let i = 0; i < yLines.length - 1; i++) {
+        const top = yLines[i];
+        const bottom = yLines[i + 1];
+        const key = `${top}_${bottom}`;
+        const xLines = verticalSplitsByZone[key] || [];
+        xLines.forEach(x => {
+          ctx.beginPath();
+          ctx.moveTo(x, top);
+          ctx.lineTo(x, bottom);
+          ctx.stroke();
+        });
       }
     }
 
-    /* ── Unsubscribe tool logic (unchanged) ── */
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (mode === 'H') {
+        horizontalSplits.push(y);
+        horizontalSplits.sort((a, b) => a - b);
+        splitHistory.push({ type: 'horizontal', value: y });
+      } else if (mode === 'V') {
+        const yLines = [0, ...horizontalSplits, canvas.height];
+        for (let i = 0; i < yLines.length - 1; i++) {
+          if (y >= yLines[i] && y <= yLines[i + 1]) {
+            const key = `${yLines[i]}_${yLines[i + 1]}`;
+            verticalSplitsByZone[key] = verticalSplitsByZone[key] || [];
+            verticalSplitsByZone[key].push(x);
+            verticalSplitsByZone[key].sort((a, b) => a - b);
+            splitHistory.push({ type: 'vertical', value: x, key: key });
+            break;
+          }
+        }
+      }
+      drawImage();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toUpperCase() === 'H') mode = 'H';
+      if (e.key.toUpperCase() === 'V') mode = 'V';
+
+      if (e.ctrlKey && e.key === 'z') {
+        const last = splitHistory.pop();
+        if (!last) return;
+
+        if (last.type === 'horizontal') {
+          const index = horizontalSplits.indexOf(last.value);
+          if (index !== -1) horizontalSplits.splice(index, 1);
+        } else if (last.type === 'vertical') {
+          const arr = verticalSplitsByZone[last.key];
+          if (arr) {
+            const index = arr.indexOf(last.value);
+            if (index !== -1) arr.splice(index, 1);
+            if (arr.length === 0) delete verticalSplitsByZone[last.key];
+          }
+        }
+
+        drawImage();
+        updateAllProportions();
+      }
+    });
+
+    function cropImageToDataURL(sx, sy, sw, sh) {
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = sw;
+      tmpCanvas.height = sh;
+      const tmpCtx = tmpCanvas.getContext('2d');
+      tmpCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+      return tmpCanvas.toDataURL('image/png');
+    }
+
+    downloadZipBtn.addEventListener('click', () => {
+      const zip = new JSZip();
+      output.innerHTML = '';
+
+      const yLines = [0, ...horizontalSplits, canvas.height];
+      for (let i = 0; i < yLines.length - 1; i++) {
+        const top = yLines[i];
+        const bottom = yLines[i + 1];
+        const key = `${top}_${bottom}`;
+        const xLines = [0, ...(verticalSplitsByZone[key] || []), canvas.width];
+
+        for (let j = 0; j < xLines.length - 1; j++) {
+          const left = xLines[j];
+          const right = xLines[j + 1];
+          const w = right - left;
+          const h = bottom - top;
+
+          const dataUrl = cropImageToDataURL(left, top, w, h);
+          const base64 = dataUrl.split(',')[1];
+          const name = `zone${i + 1}_chunk${j + 1}.png`;
+
+          zip.file(name, base64, { base64: true });
+
+          const imgEl = document.createElement('img');
+          imgEl.src = dataUrl;
+          output.appendChild(imgEl);
+        }
+      }
+
+      zip.generateAsync({ type: 'blob' }).then(content => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = 'image_chunks.zip';
+        link.click();
+      });
+    });
+
+    function updateAllProportions() {
+      const scaleInput = document.getElementById('scaleWidth');
+      const outputDiv = document.getElementById('proportionalOutput');
+      const finalWidth = parseInt(scaleInput.value);
+      outputDiv.innerHTML = '';
+
+      if (isNaN(finalWidth)) {
+        outputDiv.innerHTML = '<p>Please enter a valid final width.</p>';
+        return;
+      }
+
+      if (!img || img.width === 0) {
+        outputDiv.innerHTML = '<p>Please upload an image first.</p>';
+        return;
+      }
+
+      const scale = finalWidth / img.width;
+
+      horizontalSplits.sort((a, b) => a - b);
+      const zones = [];
+
+      for (let i = 0; i <= horizontalSplits.length; i++) {
+        const yStart = i === 0 ? 0 : horizontalSplits[i - 1];
+        const yEnd = i === horizontalSplits.length ? img.height : horizontalSplits[i];
+        const key = `${yStart}_${yEnd}`;
+        const verticals = verticalSplitsByZone[key] || [];
+
+        const splits = [0, ...verticals.sort((a, b) => a - b), img.width];
+        const widths = [];
+
+        for (let j = 0; j < splits.length - 1; j++) {
+          const originalWidth = splits[j + 1] - splits[j];
+          const scaled = Math.round(originalWidth * scale);
+          widths.push(scaled);
+        }
+
+        zones.push({
+          zoneIndex: `${i + 1}`,
+          scaledWidths: widths
+        });
+      }
+
+      zones.forEach(zone => {
+        const title = `<p><strong>Zone ${zone.zoneIndex}</strong></p>`;
+        const list = zone.scaledWidths.map((w, i) => `<li>Chunk ${i + 1}: ${w}px</li>`).join('');
+        outputDiv.innerHTML += `${title}<ul>${list}</ul>`;
+      });
+    }
+
+    /* ── Unsubscribe tool logic ── */
     const COUNTRIES = [
       { code: "AE",   label: "United Arab Emirates", link: "{{unsubscribe_product_link[,AE]}}",  sfmc: false },
       { code: "OM",   label: "Oman",                 link: "{{unsubscribe_product_link[,OM]}}",  sfmc: false },
