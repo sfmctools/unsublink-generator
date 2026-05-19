@@ -736,6 +736,7 @@
     <button class="tab-btn active" onclick="switchTab('unsub', this)">Unsubscribe Link Generator</button>
     <button class="tab-btn" onclick="switchTab('splitter', this)">Image Splitter</button>
     <button class="tab-btn" onclick="switchTab('colour', this)">Colour Swapper</button>
+    <button class="tab-btn" onclick="redirectAgenda()">Agenda Generator</button>
   </div>
 
   <!-- Unsubscribe tool panel -->
@@ -928,6 +929,10 @@
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('panel-' + name).classList.add('active');
+    }
+
+    function redirectAgenda() {
+      window.open('https://sathvikautomationtools.github.io/agenda_generator/', '_blank');
     }
 
     /* ════════════════════════════════════════
