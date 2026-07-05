@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Email Tools</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -75,6 +77,11 @@
       transition: background 0.2s;
     }
     #panel-splitter button:hover { background: #2b6cb0; }
+    #panel-splitter .crop-status {
+      margin: 0 0 14px;
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
 
     /* ── Colour Swapper ── */
     #panel-colour {
@@ -444,6 +451,239 @@
 
     .btn-download-colour:hover { background: #2f855a; }
 
+    /* ── Interactive live preview ── */
+    #colour-live {
+      display: none;
+      margin-top: 24px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .live-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 20px;
+    }
+
+    .live-card h2 { font-size: 1.1rem; color: #2d3748; margin-bottom: 6px; }
+    .live-card .live-hint { font-size: 0.82rem; color: #718096; margin-bottom: 14px; }
+
+    .live-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+
+    .live-frame-wrap {
+      flex: 1;
+      min-width: 320px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f7fafc;
+    }
+
+    #colour-preview-frame {
+      width: 100%;
+      height: 560px;
+      border: none;
+      display: block;
+      background: #fff;
+    }
+
+    .live-editor {
+      width: 300px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    @media (max-width: 760px) { .live-editor { width: 100%; } }
+
+    .live-editor .editor-empty {
+      font-size: 0.85rem;
+      color: #a0aec0;
+      background: #f7fafc;
+      border: 1px dashed #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .sel-info {
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: #2b6cb0;
+    }
+
+    .sel-info .sel-tag {
+      font-family: monospace;
+      font-weight: 700;
+      color: #2c5282;
+      word-break: break-all;
+    }
+
+    .sel-nav { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+    .sel-nav button {
+      padding: 5px 10px;
+      background: #fff;
+      color: #2b6cb0;
+      border: 1px solid #bee3f8;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .sel-nav button:hover { background: #dbeafe; }
+
+    .prop-block {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .prop-block .prop-label {
+      font-weight: 700;
+      color: #4a5568;
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .prop-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .prop-swatch {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+      border: 2px solid #cbd5e0;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background-image:
+        linear-gradient(45deg, #ddd 25%, transparent 25%),
+        linear-gradient(-45deg, #ddd 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ddd 75%),
+        linear-gradient(-45deg, transparent 75%, #ddd 75%);
+      background-size: 10px 10px;
+      background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+    }
+
+    .prop-swatch:hover { border-color: #3182ce; }
+    .prop-swatch.armed { border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49,130,206,0.3); }
+
+    .prop-hex-input {
+      font-family: monospace;
+      font-size: 0.82rem;
+      padding: 6px 8px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      width: 96px;
+      outline: none;
+    }
+
+    .prop-hex-input:focus { border-color: #4299e1; }
+
+    .prop-clear {
+      background: none;
+      border: none;
+      color: #e53e3e;
+      cursor: pointer;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+
+    .live-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+    .btn-live {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-live-refresh { background: #edf2f7; color: #2d3748; }
+    .btn-live-refresh:hover { background: #e2e8f0; }
+    .btn-live-download { background: #38a169; color: #fff; }
+    .btn-live-download:hover { background: #2f855a; }
+
+    /* ── HTML to PDF tool ── */
+    #panel-pdf { align-items: center; padding: 40px 20px; overflow-y: auto; }
+    #panel-pdf h1 { font-size: 1.8rem; margin-bottom: 8px; color: #2d3748; }
+
+    .pdf-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 30px;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .pdf-url-row { display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+
+    .pdf-url-row input {
+      flex: 1;
+      min-width: 220px;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .pdf-url-row input:focus { border-color: #4299e1; }
+
+    .pdf-options { display: flex; gap: 18px; margin: 18px 0; flex-wrap: wrap; align-items: center; }
+    .pdf-options label { font-size: 0.85rem; color: #4a5568; display: flex; align-items: center; gap: 6px; margin-bottom: 0; }
+    .pdf-options select { padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.88rem; }
+
+    .btn-pdf {
+      padding: 12px 28px;
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    .btn-pdf:hover { background: #2b6cb0; }
+    .btn-pdf:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    #pdf-status {
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: #4a5568;
+      display: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    #pdf-status.error { color: #e53e3e; background: #fff5f5; border-color: #fed7d7; }
+    #pdf-status.success { color: #276749; background: #f0fff4; border-color: #9ae6b4; }
+
+    #pdf-render-host {
+      position: absolute;
+      left: -99999px;
+      top: 0;
+      width: 1024px;
+      background: #fff;
+    }
+
+    #pdf-render-host iframe { width: 1024px; border: none; background: #fff; }
+
     /* ── Unsubscribe tool styles ── */
     h1 { font-size: 1.8rem; margin-bottom: 8px; color: #2d3748; }
 
@@ -736,6 +976,7 @@
     <button class="tab-btn active" onclick="switchTab('unsub', this)">Unsubscribe Link Generator</button>
     <button class="tab-btn" onclick="switchTab('splitter', this)">Image Splitter</button>
     <button class="tab-btn" onclick="switchTab('colour', this)">Colour Swapper</button>
+    <button class="tab-btn" onclick="switchTab('pdf', this)">HTML to PDF</button>
     <button class="tab-btn" onclick="redirectAgenda()">Agenda Generator</button>
   </div>
 
@@ -790,6 +1031,9 @@
   <div class="tab-panel" id="panel-splitter">
     <h2>Image Splitter</h2>
     <input type="file" id="splitter-upload" accept="image/*"><br><br>
+
+    <p class="crop-status">Press <strong>H</strong> then click for a horizontal split, <strong>V</strong> then click for a vertical split. Ctrl+Z undoes the last split.</p>
+
     <canvas id="splitter-canvas"></canvas>
     <br><br>
     <label for="scaleWidth">Final Width:</label>
@@ -801,6 +1045,7 @@
       <button id="downloadZip">Download ZIP</button>
     </div>
     <div id="splitter-output"></div>
+
     <p style="margin-top: 24px; font-size: 0.75rem; color: #a0aec0;">Credits: <a href="https://github.com/arcenter" target="_blank" rel="noopener" style="color: #a0aec0; text-decoration: underline;">arcenter</a> on GitHub</p>
   </div>
 
@@ -808,8 +1053,9 @@
   <div class="tab-panel" id="panel-colour">
     <h1>Colour Swapper</h1>
     <p class="subtitle">
-      Upload or paste your HTML, pick colours from a reference image, remap hex colours,
-      and optionally override text-in-shape and page background colours independently.
+      Upload or paste your HTML, then either recolour interactively — click any part of the
+      live preview and set its text/background colour by hex or picked from a reference image —
+      or use the bulk hex mapping below to remap every occurrence of a colour at once.
     </p>
 
     <div class="colour-grid">
@@ -910,7 +1156,66 @@
 
     </div>
 
-    <button class="btn-apply-colour" onclick="applyColourSwap()">Apply Colour Swap</button>
+    <!-- Interactive live preview: click any part of the rendered HTML to recolour it -->
+    <div id="colour-live">
+      <div class="live-card">
+        <h2>Interactive Preview — click any part to recolour it</h2>
+        <p class="live-hint">
+          Click a section, text run, or box in the rendered email below to select it.
+          Then set its text colour or background — type a hex, or arm a swatch and click a
+          colour in your reference image / extracted palette. Use ▲ Parent to select the
+          containing section/box. Download exports the edited HTML.
+        </p>
+        <div class="live-layout">
+          <div class="live-frame-wrap">
+            <iframe id="colour-preview-frame" title="HTML preview"></iframe>
+          </div>
+          <div class="live-editor" id="live-editor">
+            <div class="editor-empty" id="live-editor-empty">
+              Click an element in the preview to start editing its colours.
+            </div>
+
+            <div id="live-editor-controls" style="display:none;">
+              <div class="sel-info">
+                Selected: <span class="sel-tag" id="sel-tag">—</span>
+                <div class="sel-nav">
+                  <button onclick="selectParentElement()">▲ Parent</button>
+                  <button onclick="deselectLiveElement()">Deselect</button>
+                </div>
+              </div>
+
+              <div class="prop-block">
+                <span class="prop-label">Text colour</span>
+                <div class="prop-controls">
+                  <div class="prop-swatch" id="live-text-swatch"
+                       onclick="armLiveTarget('text')" title="Arm, then click a palette/image colour"></div>
+                  <input class="prop-hex-input" id="live-text-hex" type="text"
+                         maxlength="7" placeholder="#rrggbb" oninput="onLiveHexInput('text')" />
+                  <button class="prop-clear" onclick="clearLiveProp('text')">reset</button>
+                </div>
+              </div>
+
+              <div class="prop-block">
+                <span class="prop-label">Background colour</span>
+                <div class="prop-controls">
+                  <div class="prop-swatch" id="live-bg-swatch"
+                       onclick="armLiveTarget('bg')" title="Arm, then click a palette/image colour"></div>
+                  <input class="prop-hex-input" id="live-bg-hex" type="text"
+                         maxlength="7" placeholder="#rrggbb" oninput="onLiveHexInput('bg')" />
+                  <button class="prop-clear" onclick="clearLiveProp('bg')">reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="live-actions">
+          <button class="btn-live btn-live-refresh" onclick="renderColourPreview()">↻ Load / Refresh Preview</button>
+          <button class="btn-live btn-live-download" onclick="downloadLiveHtml()">Download Edited HTML</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-apply-colour" onclick="applyColourSwap()">Apply Bulk Hex Mapping</button>
     <div id="colour-error-msg"></div>
 
     <div id="colour-result">
@@ -919,6 +1224,62 @@
       <button class="btn-download-colour" onclick="downloadColourResult()">Download HTML</button>
     </div>
   </div>
+
+  <!-- HTML to PDF panel -->
+  <div class="tab-panel" id="panel-pdf">
+    <h1>HTML to PDF</h1>
+    <p class="subtitle">
+      Upload an HTML file or paste a link. The tool renders the full page, takes a
+      screenshot of its entire height, and saves it as a PDF.
+    </p>
+    <div class="pdf-card">
+      <div class="upload-section">
+        <label>Upload HTML File</label>
+        <div class="upload-drop-zone" id="pdf-drop-zone">
+          <input type="file" id="pdf-file-input" accept=".html,.htm" />
+          <p>Click to browse or drag and drop your HTML file here</p>
+          <span>Accepts .html and .htm files</span>
+        </div>
+        <div class="upload-status" id="pdf-upload-status">
+          <span>Loaded: <strong id="pdf-loaded-filename"></strong></span>
+          <button class="clear-btn" onclick="clearPdfSource()">Clear</button>
+        </div>
+      </div>
+
+      <div class="divider">OR paste a link</div>
+      <div>
+        <label for="pdf-url-input">Page URL</label>
+        <div class="pdf-url-row">
+          <input type="url" id="pdf-url-input" placeholder="https://example.com/page.html" />
+        </div>
+        <p class="textarea-hint">
+          Note: many external sites block being captured from another origin (CORS). If a
+          link fails, download its HTML and upload the file instead — that always works.
+        </p>
+      </div>
+
+      <div class="pdf-options">
+        <label>Page size
+          <select id="pdf-format">
+            <option value="a4">A4</option>
+            <option value="letter">Letter</option>
+          </select>
+        </label>
+        <label>Orientation
+          <select id="pdf-orientation">
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </label>
+      </div>
+
+      <button class="btn-pdf" id="pdf-generate-btn" onclick="generatePdf()">Generate PDF</button>
+      <div id="pdf-status"></div>
+    </div>
+  </div>
+
+  <!-- Off-screen host where pages are rendered before capture -->
+  <div id="pdf-render-host"></div>
 
   <script>
     /* ════════════════════════════════════════
@@ -1112,6 +1473,7 @@
         document.getElementById('colour-html-input').value = e.target.result;
         document.getElementById('colour-html-filename').textContent = file.name;
         document.getElementById('colour-html-status').style.display = 'flex';
+        previewRendered = false;      // force a fresh render for the new file
         extractAndBuildMap();
       };
       reader.readAsText(file);
@@ -1124,6 +1486,10 @@
       document.getElementById('colour-html-filename').textContent = '';
       document.getElementById('colour-mapping').style.display = 'none';
       document.getElementById('colour-result').style.display = 'none';
+      document.getElementById('colour-live').style.display = 'none';
+      document.getElementById('colour-preview-frame').srcdoc = '';
+      previewRendered = false;
+      deselectLiveElement();
     }
 
     document.getElementById('colour-html-input').addEventListener('input', extractAndBuildMap);
@@ -1192,9 +1558,14 @@
           assignColourToMapRow(activeMapTarget.index, hex);
         } else if (activeMapTarget.type === 'override') {
           assignColourToOverride(activeMapTarget.key, hex);
+        } else if (activeMapTarget.type === 'live') {
+          applyLiveProp(activeMapTarget.prop, hex);
         }
         activeMapTarget = null;
-        document.querySelectorAll('.new-swatch, .override-swatch').forEach(s => s.style.outline = '');
+        document.querySelectorAll('.new-swatch, .override-swatch, .prop-swatch').forEach(s => {
+          s.style.outline = '';
+          s.classList.remove('armed');
+        });
       }
     }
 
@@ -1250,6 +1621,7 @@
 
     /* ── Extract hex colours from HTML and build mapping UI ── */
     function extractAndBuildMap() {
+      ensureLivePanel();
       const html = document.getElementById('colour-html-input').value;
       if (!html.trim()) { document.getElementById('colour-mapping').style.display = 'none'; return; }
 
@@ -1310,6 +1682,174 @@
       const inp = document.getElementById(`new-hex-${index}`);
       if (sw)  { sw.style.background = hex; sw.style.outline = ''; }
       if (inp) inp.value = hex;
+    }
+
+    /* ════════════════════════════════════════
+       INTERACTIVE LIVE PREVIEW
+       Renders the HTML in a same-origin srcdoc iframe. Clicking any element
+       selects it; the user can then set its text/background colour by hex or
+       by arming a swatch and picking a colour from the reference image/palette.
+    ════════════════════════════════════════ */
+    let selectedLiveEl = null;
+    let previewRendered = false;
+
+    function ensureLivePanel() {
+      const html = document.getElementById('colour-html-input').value;
+      const live = document.getElementById('colour-live');
+      if (html.trim()) {
+        live.style.display = 'block';
+        if (!previewRendered) renderColourPreview();
+      } else {
+        live.style.display = 'none';
+        previewRendered = false;
+      }
+    }
+
+    function renderColourPreview() {
+      const html = document.getElementById('colour-html-input').value;
+      if (!html.trim()) { showColourError('Upload or paste HTML first.'); return; }
+      clearColourError();
+      const frame = document.getElementById('colour-preview-frame');
+      document.getElementById('colour-live').style.display = 'block';
+      deselectLiveElement();
+
+      frame.onload = () => {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+        // Inject a tool-only stylesheet for hover/selection outlines. Tagged so
+        // it can be stripped on export.
+        const style = doc.createElement('style');
+        style.setAttribute('data-colour-tool', '');
+        style.textContent =
+          '[data-ct-hover]{outline:2px dashed #3182ce !important; outline-offset:-2px;}' +
+          '[data-ct-selected]{outline:3px solid #e53e3e !important; outline-offset:-3px;}';
+        (doc.head || doc.body || doc.documentElement).appendChild(style);
+
+        // Capture-phase listeners so links/buttons inside the email can't navigate.
+        doc.addEventListener('mouseover', e => {
+          if (e.target.setAttribute && e.target !== doc.documentElement && e.target !== doc.body)
+            e.target.setAttribute('data-ct-hover', '');
+        }, true);
+        doc.addEventListener('mouseout', e => {
+          if (e.target.removeAttribute) e.target.removeAttribute('data-ct-hover');
+        }, true);
+        doc.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          selectLiveElement(e.target);
+        }, true);
+      };
+      frame.srcdoc = html;
+      previewRendered = true;
+    }
+
+    function selectLiveElement(el) {
+      if (!el || el.nodeType !== 1) return;
+      if (selectedLiveEl) selectedLiveEl.removeAttribute('data-ct-selected');
+      selectedLiveEl = el;
+      el.setAttribute('data-ct-selected', '');
+      el.removeAttribute('data-ct-hover');
+
+      document.getElementById('live-editor-empty').style.display = 'none';
+      document.getElementById('live-editor-controls').style.display = 'block';
+
+      const tag = el.tagName.toLowerCase();
+      const id  = el.id ? '#' + el.id : '';
+      let cls = '';
+      if (el.className && typeof el.className === 'string' && el.className.trim())
+        cls = '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.');
+      document.getElementById('sel-tag').textContent = tag + id + cls;
+
+      const doc = el.ownerDocument;
+      const cs  = doc.defaultView.getComputedStyle(el);
+      syncLiveInputs(rgbStrToHex(cs.color), rgbStrToHex(cs.backgroundColor));
+    }
+
+    function selectParentElement() {
+      if (!selectedLiveEl) return;
+      const parent = selectedLiveEl.parentElement;
+      const doc = selectedLiveEl.ownerDocument;
+      if (parent && parent !== doc.documentElement) selectLiveElement(parent);
+    }
+
+    function deselectLiveElement() {
+      if (selectedLiveEl) selectedLiveEl.removeAttribute('data-ct-selected');
+      selectedLiveEl = null;
+      const controls = document.getElementById('live-editor-controls');
+      const empty    = document.getElementById('live-editor-empty');
+      if (controls) controls.style.display = 'none';
+      if (empty)    empty.style.display = 'block';
+      document.querySelectorAll('.prop-swatch').forEach(s => s.classList.remove('armed'));
+    }
+
+    function syncLiveInputs(textHex, bgHex) {
+      document.getElementById('live-text-hex').value = textHex || '';
+      document.getElementById('live-bg-hex').value   = bgHex || '';
+      document.getElementById('live-text-swatch').style.background = textHex || '';
+      document.getElementById('live-bg-swatch').style.background   = bgHex || '';
+    }
+
+    function onLiveHexInput(prop) {
+      const val = document.getElementById(`live-${prop}-hex`).value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(val) || /^#[0-9a-fA-F]{3}$/.test(val))
+        applyLiveProp(prop, normaliseHex(val));
+    }
+
+    function applyLiveProp(prop, hex) {
+      if (!selectedLiveEl) return;
+      if (prop === 'text') selectedLiveEl.style.color = hex;
+      else                 selectedLiveEl.style.backgroundColor = hex;
+      document.getElementById(`live-${prop}-hex`).value = hex;
+      document.getElementById(`live-${prop}-swatch`).style.background = hex;
+      document.getElementById(`live-${prop}-swatch`).classList.remove('armed');
+    }
+
+    function clearLiveProp(prop) {
+      if (!selectedLiveEl) return;
+      selectedLiveEl.style.removeProperty(prop === 'text' ? 'color' : 'background-color');
+      const cs = selectedLiveEl.ownerDocument.defaultView.getComputedStyle(selectedLiveEl);
+      const hex = prop === 'text' ? rgbStrToHex(cs.color) : rgbStrToHex(cs.backgroundColor);
+      document.getElementById(`live-${prop}-hex`).value = hex || '';
+      document.getElementById(`live-${prop}-swatch`).style.background = hex || '';
+    }
+
+    /* Arm a live target so the next reference-image/palette pick lands on it.
+       If a colour is already picked, apply it right away. */
+    function armLiveTarget(prop) {
+      if (!selectedLiveEl) { showColourError('Select an element in the preview first.'); return; }
+      clearColourError();
+      document.querySelectorAll('.prop-swatch, .new-swatch, .override-swatch').forEach(s => {
+        s.classList.remove('armed'); s.style.outline = '';
+      });
+      if (pickedColour) { applyLiveProp(prop, pickedColour); return; }
+      activeMapTarget = { type: 'live', prop };
+      document.getElementById(`live-${prop}-swatch`).classList.add('armed');
+    }
+
+    function downloadLiveHtml() {
+      const frame = document.getElementById('colour-preview-frame');
+      const doc = frame.contentDocument;
+      if (!doc || !previewRendered) { showColourError('Load the preview first, then edit and download.'); return; }
+      const clone = doc.documentElement.cloneNode(true);
+      clone.querySelectorAll('style[data-colour-tool]').forEach(n => n.remove());
+      clone.querySelectorAll('[data-ct-hover]').forEach(n => n.removeAttribute('data-ct-hover'));
+      clone.querySelectorAll('[data-ct-selected]').forEach(n => n.removeAttribute('data-ct-selected'));
+      const out = '<!DOCTYPE html>\n' + clone.outerHTML;
+      const blob = new Blob([out], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'colour_edited.html';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    /* Convert "rgb(r,g,b)" / "rgba(r,g,b,a)" to #rrggbb; returns '' if fully transparent. */
+    function rgbStrToHex(rgb) {
+      if (!rgb) return '';
+      const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (!m) return '';
+      if (m[4] !== undefined && parseFloat(m[4]) === 0) return '';
+      return rgbToHex(+m[1], +m[2], +m[3]);
     }
 
     /* ── Override toggles ── */
@@ -1665,6 +2205,184 @@
 
     function escapeHtml(str) {
       return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ════════════════════════════════════════
+       HTML → PDF
+       Renders the source (uploaded HTML or a URL) into an off-screen iframe,
+       screenshots the full scroll height with html2canvas, then slices the
+       image across pages into a PDF with jsPDF. Fully client-side (GitHub
+       Pages friendly). External URLs work only when the site permits
+       cross-origin capture.
+    ════════════════════════════════════════ */
+    let pdfSource = null;   // { type:'html', content, name } | { type:'url', url }
+
+    const pdfFileInput  = document.getElementById('pdf-file-input');
+    const pdfDropZone   = document.getElementById('pdf-drop-zone');
+    const pdfUrlInput   = document.getElementById('pdf-url-input');
+
+    pdfFileInput.addEventListener('change', () => {
+      if (pdfFileInput.files.length) handlePdfFile(pdfFileInput.files[0]);
+    });
+    pdfDropZone.addEventListener('dragover',  e => { e.preventDefault(); pdfDropZone.classList.add('dragover'); });
+    pdfDropZone.addEventListener('dragleave', () => pdfDropZone.classList.remove('dragover'));
+    pdfDropZone.addEventListener('drop', e => {
+      e.preventDefault(); pdfDropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && (file.name.endsWith('.html') || file.name.endsWith('.htm'))) handlePdfFile(file);
+      else showPdfStatus('Please drop a valid .html or .htm file.', 'error');
+    });
+    pdfUrlInput.addEventListener('input', () => {
+      const url = pdfUrlInput.value.trim();
+      if (url) {
+        pdfSource = { type: 'url', url };
+        // Clear an uploaded file so the URL takes precedence.
+        pdfFileInput.value = '';
+        document.getElementById('pdf-upload-status').style.display = 'none';
+      } else if (pdfSource && pdfSource.type === 'url') {
+        pdfSource = null;
+      }
+    });
+
+    function handlePdfFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        pdfSource = { type: 'html', content: e.target.result, name: file.name.replace(/\.(html|htm)$/i, '') };
+        document.getElementById('pdf-loaded-filename').textContent = file.name;
+        document.getElementById('pdf-upload-status').style.display = 'flex';
+        pdfUrlInput.value = '';   // file takes precedence over any URL
+        clearPdfStatus();
+      };
+      reader.readAsText(file);
+    }
+
+    function clearPdfSource() {
+      pdfFileInput.value = '';
+      pdfSource = null;
+      document.getElementById('pdf-upload-status').style.display = 'none';
+      document.getElementById('pdf-loaded-filename').textContent = '';
+      clearPdfStatus();
+    }
+
+    function loadIntoFrame(frame, source) {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = () => { if (!settled) { settled = true; setTimeout(resolve, 400); } };
+        frame.onload = finish;
+        frame.onerror = () => { if (!settled) { settled = true; reject(new Error('The page failed to load.')); } };
+        if (source.type === 'html') frame.srcdoc = source.content;
+        else frame.src = source.url;
+        // Safety net if onload never fires (e.g. blocked navigation).
+        setTimeout(finish, 8000);
+      });
+    }
+
+    async function generatePdf() {
+      const url = pdfUrlInput.value.trim();
+      if (!pdfSource && url) pdfSource = { type: 'url', url };
+      if (!pdfSource) { showPdfStatus('Upload an HTML file or paste a link first.', 'error'); return; }
+
+      const btn = document.getElementById('pdf-generate-btn');
+      btn.disabled = true;
+      showPdfStatus('Rendering the page…', '');
+
+      const host = document.getElementById('pdf-render-host');
+      host.innerHTML = '';
+      const frame = document.createElement('iframe');
+      frame.setAttribute('width', '1024');
+      host.appendChild(frame);
+
+      try {
+        await loadIntoFrame(frame, pdfSource);
+
+        let doc;
+        try {
+          doc = frame.contentDocument;
+          if (!doc || !doc.body) throw new Error('empty');
+        } catch (err) {
+          throw new Error('This page blocks cross-origin capture. Download its HTML and upload the file instead.');
+        }
+
+        const fullHeight = Math.max(
+          doc.body.scrollHeight, doc.documentElement.scrollHeight,
+          doc.body.offsetHeight, doc.documentElement.offsetHeight, 100
+        );
+        frame.style.height = fullHeight + 'px';
+        frame.setAttribute('height', String(fullHeight));
+
+        showPdfStatus('Capturing full-page screenshot…', '');
+        const canvas = await html2canvas(doc.body, {
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          scale: 2,
+          width: 1024,
+          windowWidth: 1024,
+          height: fullHeight,
+          windowHeight: fullHeight,
+          scrollX: 0,
+          scrollY: 0
+        });
+
+        const format      = document.getElementById('pdf-format').value;
+        const orientation = document.getElementById('pdf-orientation').value;
+        const filename    = (pdfSource.type === 'html' && pdfSource.name)
+          ? pdfSource.name + '.pdf'
+          : urlToFilename(pdfSource.url);
+
+        buildPdfFromCanvas(canvas, format, orientation, filename);
+        showPdfStatus('Done — your PDF has been downloaded.', 'success');
+      } catch (err) {
+        let msg = err.message || 'Something went wrong.';
+        if (pdfSource.type === 'url' && !/cross-origin/i.test(msg))
+          msg += ' External sites often block capture — try downloading the HTML and uploading it.';
+        showPdfStatus(msg, 'error');
+      } finally {
+        btn.disabled = false;
+        host.innerHTML = '';
+      }
+    }
+
+    function buildPdfFromCanvas(canvas, format, orientation, filename) {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation, unit: 'pt', format });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+
+      const imgW = pageW;
+      const imgH = canvas.height * (pageW / canvas.width);
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+      let heightLeft = imgH;
+      let position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+      heightLeft -= pageH;
+      while (heightLeft > 0) {
+        position -= pageH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
+      pdf.save(filename);
+    }
+
+    function urlToFilename(url) {
+      try {
+        const u = new URL(url);
+        const base = (u.hostname + u.pathname).replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+        return (base || 'page') + '.pdf';
+      } catch (e) { return 'page.pdf'; }
+    }
+
+    function showPdfStatus(msg, kind) {
+      const el = document.getElementById('pdf-status');
+      el.textContent = msg;
+      el.className = kind || '';
+      el.style.display = 'block';
+    }
+
+    function clearPdfStatus() {
+      const el = document.getElementById('pdf-status');
+      el.textContent = ''; el.style.display = 'none'; el.className = '';
     }
   </script>
 
