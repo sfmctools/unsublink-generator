@@ -906,7 +906,6 @@
     <button class="tab-btn active" onclick="switchTab('unsub', this)">Unsubscribe Link Generator</button>
     <button class="tab-btn" onclick="switchTab('splitter', this)">Image Splitter</button>
     <button class="tab-btn" onclick="switchTab('colour', this)">Colour Swapper</button>
-    <button class="tab-btn" onclick="switchTab('pdf', this)">HTML to PDF</button>
     <button class="tab-btn" onclick="redirectAgenda()">Agenda Generator</button>
   </div>
 
@@ -1155,58 +1154,6 @@
     </div>
   </div>
 
-  <!-- HTML to PDF panel -->
-  <div class="tab-panel" id="panel-pdf">
-    <h1>HTML to PDF</h1>
-    <p class="subtitle">
-      Upload an HTML file or paste a link. The tool renders the full page, takes a
-      screenshot of its entire height, and saves it as a PDF.
-    </p>
-    <div class="pdf-card">
-      <div class="upload-section">
-        <label>Upload HTML File</label>
-        <div class="upload-drop-zone" id="pdf-drop-zone">
-          <input type="file" id="pdf-file-input" accept=".html,.htm" />
-          <p>Click to browse or drag and drop your HTML file here</p>
-          <span>Accepts .html and .htm files</span>
-        </div>
-        <div class="upload-status" id="pdf-upload-status">
-          <span>Loaded: <strong id="pdf-loaded-filename"></strong></span>
-          <button class="clear-btn" onclick="clearPdfSource()">Clear</button>
-        </div>
-      </div>
-
-      <div class="divider">OR paste a link</div>
-      <div>
-        <label for="pdf-url-input">Page URL</label>
-        <div class="pdf-url-row">
-          <input type="url" id="pdf-url-input" placeholder="https://example.com/page.html" />
-        </div>
-        <p class="textarea-hint">
-          Note: many external sites block being captured from another origin (CORS). If a
-          link fails, download its HTML and upload the file instead — that always works.
-        </p>
-      </div>
-
-      <div class="pdf-options">
-        <label>Page size
-          <select id="pdf-format">
-            <option value="a4">A4</option>
-            <option value="letter">Letter</option>
-          </select>
-        </label>
-        <label>Orientation
-          <select id="pdf-orientation">
-            <option value="portrait">Portrait</option>
-            <option value="landscape">Landscape</option>
-          </select>
-        </label>
-      </div>
-
-      <button class="btn-pdf" id="pdf-generate-btn" onclick="generatePdf()">Generate PDF</button>
-      <div id="pdf-status"></div>
-    </div>
-  </div>
 
   <!-- Off-screen host where pages are rendered before capture -->
   <div id="pdf-render-host"></div>
